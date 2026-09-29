@@ -1,9 +1,28 @@
-import cv2 as cv
-import numpy as np
+import keras
+from keras import layers
+import tensorflow as tf
 
-print("OpenCV: ", cv.__version__)
-img = np.zeros((120, 400, 3), dtype=np.uint8)
+DATA_DIR = 'archive/images'
+IMG_SIZE = (128, 128)
+BATCH = 32
+SEED = 1
 
-cv.putText(img, "OPENCV OK", (10,30), cv.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3)
-cv.imshow("hello", img); 
-cv.waitKey(0)
+val_ds = keras.utils.image_dataset_from_directory(
+    DATA_DIR,
+    validation_split=0.2,
+    subset='validation',
+    seed=SEED,
+    image_size=IMG_SIZE,
+    batch_size=BATCH,
+    label_mode='binary',
+) 
+
+AUTOTUNE = tf.data.AUTOTUNE
+to_uint8 = lambda x, y: (tf.cast(x, tf.uint8), y)
+
+val_ds = val_ds.prefetch(tf.data.AUTOTUNE)
+
+model = keras.models.load_model('model.keras')
+model.evaluate(val_ds)
+classes = model.predict(val_ds, batch_size=10)
+
